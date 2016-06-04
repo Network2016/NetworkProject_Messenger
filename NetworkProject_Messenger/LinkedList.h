@@ -16,12 +16,14 @@ struct node *head = NULL;
 struct node *current = NULL;
 
 //display the list
-char* getList()
+char* getList(char* buf)
 {
     struct node *ptr = head;
     printf("\n[ ");
     
-    char buf[1024];
+    char* array1[1024];
+    char* array2[1024];
+    
     strcat(buf, "ID/ IP/ port/ room#\n");
     //start from the beginning
     while(ptr != NULL)
@@ -30,9 +32,9 @@ char* getList()
         strcat(buf, " ");
         strcat(buf, ptr->IP);
         strcat(buf, " ");
-        strcat(buf, itoc(ptr->port));
+        strcat(buf, itoc(ptr->port, array1));
         strcat(buf, " ");
-        strcat(buf, itoc(ptr->room));
+        strcat(buf, itoc(ptr->room, array2));
         strcat(buf, "\n");
         ptr = ptr->next;
     }
@@ -172,10 +174,10 @@ void reverse(struct node** head_ref) {
     *head_ref = prev;
 }
 
-char* itoc(int a)
+char* itoc(int a, char* array)
 {
-    char array[1024];
-    int temp = a; int cnt = 0;   // 자릿수 세기
+    int temp = a;
+    int cnt = 0;   // 자릿수 세기
     while (temp > 0){
         temp = temp / 10;
         ++cnt;
