@@ -23,7 +23,7 @@ static char* hostIP = NULL; // ip
 static char* hostport = NULL; // port number
 static char* myID = NULL;
 
-int connectToClient(char* buf);
+int connectToClient(char* cip, char* cport, char *buf);
 int connectToServer(char* buf);
 void display();
 char* touppers(char* str);
