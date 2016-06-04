@@ -23,6 +23,7 @@ static char* hostIP = NULL; // ip
 static char* hostport = NULL; // port number
 static char* myID = NULL;
 
+int connectToClient(char* buf);
 int connectToServer(char* buf);
 void display();
 char* touppers(char* str);
@@ -74,14 +75,13 @@ int main(int argc, char **argv) {
     
     // 여기까지 기본 소켓세팅
     hostIP = argv[2]; // ip
-    hostport = argv[3]; // port number
+    hostport = argv[3]; // port numbere
     myID = argv[4];
     
-    char* buf;
+    char buf[1024];
     strcat(buf, "connect ");
     strcat(buf, myID);
     peertcpSockets = connectToServer(buf);
-    close(peertcpSocket);
     
     FD_ZERO(&reads);
     FD_SET(fileno(stdin), &reads);
@@ -105,63 +105,60 @@ int main(int argc, char **argv) {
             char sendhttp[1024];
             memset(sendhttp, NULL, sizeof(sendhttp));
             
-            char* buffer;
             
             fgets(command, sizeof (command), stdin);
             
-            strcpy(buffer, command);
-            
             if( command[0] == '@' ){
                 // send to server
-                peertcpSocket = connectToServer(buffer);
-            }else if(!strcmp(touppers(strtok(command, " ")),"@getlist")){
-                
+                peertcpSocket = connectToServer(command);
+            }else{
+                //connectToClient()
             }
-            else if(!strcmp(touppers(strtok(command, " ")),"DOWNLOAD")){ // input download
-                if ((peertcpSocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-                    perror("socket");
-                    exit(1);
-                }// create socket description
-                
-                hostp = strtok(NULL, " "); // ip
-                sin_port = strtok(NULL, " "); // port number
-                file_name = strtok(NULL, " "); // file name
-                file_name[strlen(file_name)-1] = '\0';// delete \n
-                
-                if ((hostps = gethostbyname(hostp)) == 0) {
-                    fprintf(stderr,"%s: unknown host\n",hostp);
-                    continue;
-                } // host ip
-                
-                memset((void *) &tcpClient_addr, 0, sizeof (tcpClient_addr));
-                tcpClient_addr.sin_family = AF_INET;
-                memcpy((void *) &tcpClient_addr.sin_addr, hostps->h_addr, hostps->h_length);
-                
-                tcpClient_addr.sin_port = htons((u_short)atoi(sin_port));
-                if (connect(peertcpSocket, (struct sockaddr *)&tcpClient_addr, sizeof (tcpClient_addr)) < 0) {
-                    perror("connect error\n");
-                    exit(1);
-                } // connect client to server
-                FD_SET(peertcpSocket, &reads);
-                // tcp connection
-                
-                
-                strcat(sendhttp, "GET ");
-                strcat(sendhttp, file_name);
-                strcat(sendhttp, " HTTP/1.0\n");
-                strcat(sendhttp, "HOST: ");
-                strcat(sendhttp, hostp);
-                strcat(sendhttp, "\nUser-agent: Mozila/5.0\n");
-                strcat(sendhttp, "connection: close\n");
-                
-                //sleep(1000);
-                write(peertcpSocket, sendhttp, strlen(sendhttp));
-                // create&send HTTPmsg
-                
-                
-            }else if(!strcmp(touppers(strtok(command, " ")),"QUIT\n")){ // input quit -> quit process
-                exit(1);
-            }
+//            else if(!strcmp(touppers(strtok(command, " ")),"DOWNLOAD")){ // input download
+//                if ((peertcpSocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+//                    perror("socket");
+//                    exit(1);
+//                }// create socket description
+//                
+//                hostp = strtok(NULL, " "); // ip
+//                sin_port = strtok(NULL, " "); // port number
+//                file_name = strtok(NULL, " "); // file name
+//                file_name[strlen(file_name)-1] = '\0';// delete \n
+//                
+//                if ((hostps = gethostbyname(hostp)) == 0) {
+//                    fprintf(stderr,"%s: unknown host\n",hostp);
+//                    continue;
+//                } // host ip
+//                
+//                memset((void *) &tcpClient_addr, 0, sizeof (tcpClient_addr));
+//                tcpClient_addr.sin_family = AF_INET;
+//                memcpy((void *) &tcpClient_addr.sin_addr, hostps->h_addr, hostps->h_length);
+//                
+//                tcpClient_addr.sin_port = htons((u_short)atoi(sin_port));
+//                if (connect(peertcpSocket, (struct sockaddr *)&tcpClient_addr, sizeof (tcpClient_addr)) < 0) {
+//                    perror("connect error\n");
+//                    exit(1);
+//                } // connect client to server
+//                FD_SET(peertcpSocket, &reads);
+//                // tcp connection
+//                
+//                
+//                strcat(sendhttp, "GET ");
+//                strcat(sendhttp, file_name);
+//                strcat(sendhttp, " HTTP/1.0\n");
+//                strcat(sendhttp, "HOST: ");
+//                strcat(sendhttp, hostp);
+//                strcat(sendhttp, "\nUser-agent: Mozila/5.0\n");
+//                strcat(sendhttp, "connection: close\n");
+//                
+//                //sleep(1000);
+//                write(peertcpSocket, sendhttp, strlen(sendhttp));
+//                // create&send HTTPmsg
+//                
+//                
+//            }else if(!strcmp(touppers(strtok(command, " ")),"QUIT\n")){ // input quit -> quit process
+//                exit(1);
+//            }
             
             fflush(stdin);
         }
@@ -249,11 +246,63 @@ int main(int argc, char **argv) {
                 peertcpSocket = -1;
             } // get response, connection close
             
-        } // receive
+        }else if(FD_ISSET(peertcpSockets, &temps)){
+            char buf[1024];
+            read(peertcpSocket, buf, sizeof(buf)-1);
+            printf("\n%s\n",buf); // print receive msg
+            close(peertcpSocket);
+            if(!strcmp(touppers(strtok(command, " ")),"DUPLICATE")){
+                exit(1);
+            }
+        }// receive
+        
         printf("> ");
         fflush(stdout);
     }
 }//main End
+
+
+int connectToClient(char* cip, char* cport, char *buf){
+    int peertcpsocket;
+    // 매개변수 1:자기포트 2:서버IP 3:서버포트 4:자기ID
+    if ((peertcpsocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket");
+        exit(1);
+    }// create socket description
+    
+    int tcpServ_sock;
+    
+    struct sockaddr_in tcpServer_addr;
+    struct sockaddr_in tcpClient_addr;
+    struct sockaddr_in newTcp_addr;
+    
+    struct hostent *hostpss;
+    char sendhttp[1024];
+    memset(sendhttp, NULL, sizeof(sendhttp));
+    
+    if ((hostpss = gethostbyname(cip)) == 0) {
+        fprintf(stderr,"%s: unknown host\n",cip);
+    } // host ip
+    
+    memset((void *) &tcpClient_addr, 0, sizeof (tcpClient_addr));
+    tcpClient_addr.sin_family = AF_INET;
+    memcpy((void *) &tcpClient_addr.sin_addr, hostpss->h_addr, hostpss->h_length);
+    
+    tcpClient_addr.sin_port = htons((u_short)atoi(cport));
+    if (connect(peertcpsocket, (struct sockaddr *)&tcpClient_addr, sizeof (tcpClient_addr)) < 0) {
+        perror("connect error\n");
+        exit(1);
+    } // connect client to server
+    
+    // tcp connection
+    strcpy(sendhttp, buf);
+    // give my ID to server
+    
+    //sleep(1000);
+    write(peertcpsocket, sendhttp, strlen(sendhttp));
+    // create&send HTTPmsg
+    return peertcpsocket;
+}
 
 int connectToServer(char* buf){
     int peertcpsocket;
