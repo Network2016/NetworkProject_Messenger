@@ -32,9 +32,9 @@ char* getList(char* buf)
         strcat(buf, " ");
         strcat(buf, ptr->IP);
         strcat(buf, " ");
-        strcat(buf, itoc(ptr->port, array1));
+        strcat(buf, itoc_(ptr->port, array1));
         strcat(buf, " ");
-        strcat(buf, itoc(ptr->room, array2));
+        strcat(buf, itoc_(ptr->room, array2));
         strcat(buf, "\n");
         ptr = ptr->next;
     }
@@ -174,7 +174,7 @@ void reverse(struct node** head_ref) {
     *head_ref = prev;
 }
 
-char* itoc(int a, char* array)
+char* itoc_(int a, char* array)
 {
     int temp = a;
     int cnt = 0;   // 자릿수 세기
@@ -189,4 +189,8 @@ char* itoc(int a, char* array)
         temp = temp / 10;
     }
     return array;
+}
+char itoc(int a)
+{
+    return a + 0x30;
 }
