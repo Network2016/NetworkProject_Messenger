@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     myID = argv[4];
     
     char buf[1024];
-    strcat(buf, "connect ");
+    strcat(buf, "@connect ");
     strcat(buf, myID);
     peertcpSockets = connectToServer(buf);
     
