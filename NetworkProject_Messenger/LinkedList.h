@@ -16,19 +16,27 @@ struct node *head = NULL;
 struct node *current = NULL;
 
 //display the list
-void printList()
+char* getList()
 {
     struct node *ptr = head;
     printf("\n[ ");
     
+    char buf[1024];
+    strcat(buf, "ID/ IP/ port/ room#\n");
     //start from the beginning
     while(ptr != NULL)
     {
-        printf("%s ",ptr->ID);
+        strcat(buf, ptr->ID);
+        strcat(buf, " ");
+        strcat(buf, ptr->IP);
+        strcat(buf, " ");
+        strcat(buf, itoc(ptr->port));
+        strcat(buf, " ");
+        strcat(buf, itoc(ptr->room));
+        strcat(buf, "\n");
         ptr = ptr->next;
     }
-    
-    printf(" ]");
+    return buf;
 }
 
 //insert link at the first location
@@ -110,7 +118,7 @@ struct node* find(char* IP, int port){
 }
 
 //delete a link with given key
-struct node* delete(char* IP, int port){
+struct node* deletes(char* IP, int port){
     
     //start from the first link
     struct node* current = head;
@@ -162,4 +170,21 @@ void reverse(struct node** head_ref) {
     }
     
     *head_ref = prev;
+}
+
+char* itoc(int a)
+{
+    char array[1024];
+    int temp = a; int cnt = 0;   // 자릿수 세기
+    while (temp > 0){
+        temp = temp / 10;
+        ++cnt;
+    }
+    temp = a;
+    
+    for (int i = 0; i != cnt; ++i){
+        *(array + cnt - 1 - i) = itoc(temp % 10);
+        temp = temp / 10;
+    }
+    return array;
 }
