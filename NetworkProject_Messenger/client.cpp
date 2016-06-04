@@ -19,13 +19,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+static char* hostIP = NULL; // ip
+static char* hostport = NULL; // port number
+static char* myID = NULL;
+
+int connectToServer(char* buf);
 void display();
 char* touppers(char* str);
 
 int peertcpSocket = -1;	// peer socket
+int peertcpSockets = -1;	// peer socket
 
 int main(int argc, char **argv) {
-    
+    // 매개변수 1:자기포트 2:서버IP 3:서버포트 4:자기ID
     int tcpServ_sock;
     
     struct sockaddr_in tcpServer_addr;
@@ -37,8 +43,8 @@ int main(int argc, char **argv) {
     
     char command[1024];
     
-    if(argc != 2){
-        printf("Usage : %s <tcpport>\n", argv[0]);
+    if(argc != 5){
+        printf("Usage : %s <myport> <serverIP> <serverport> <myID>\n", argv[0]);
         exit(1);
     }
     
@@ -66,12 +72,22 @@ int main(int argc, char **argv) {
         exit(1);
     } // wait connect
     
+    // 여기까지 기본 소켓세팅
+    hostIP = argv[2]; // ip
+    hostport = argv[3]; // port number
+    myID = argv[4];
+    
+    char* buf;
+    strcat(buf, "connect ");
+    strcat(buf, myID);
+    peertcpSockets = connectToServer(buf);
+    close(peertcpSocket);
+    
     FD_ZERO(&reads);
     FD_SET(fileno(stdin), &reads);
     FD_SET(tcpServ_sock, &reads);
     // initialize the select mask variables and set the
     // mask with stdin and the tcp server socket
-    
     
     while(1){
         int nfound;
@@ -89,9 +105,19 @@ int main(int argc, char **argv) {
             char sendhttp[1024];
             memset(sendhttp, NULL, sizeof(sendhttp));
             
+            char* buffer;
+            
             fgets(command, sizeof (command), stdin);
             
-            if(!strcmp(touppers(strtok(command, " ")),"DOWNLOAD")){ // input download
+            strcpy(buffer, command);
+            
+            if( command[0] == '@' ){
+                // send to server
+                peertcpSocket = connectToServer(buffer);
+            }else if(!strcmp(touppers(strtok(command, " ")),"@getlist")){
+                
+            }
+            else if(!strcmp(touppers(strtok(command, " ")),"DOWNLOAD")){ // input download
                 if ((peertcpSocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
                     perror("socket");
                     exit(1);
@@ -145,8 +171,8 @@ int main(int argc, char **argv) {
             addrlen = sizeof(newTcp_addr);
             peertcpSocket = accept(tcpServ_sock, (struct sockaddr *)&newTcp_addr, (unsigned int*)&addrlen);
             
-            printf("connection from host %s, port %d, socket %d\n\n",
-                   inet_ntoa(newTcp_addr.sin_addr), ntohs(newTcp_addr.sin_port), peertcpSocket);
+            //printf("connection from host %s, port %d, socket %d\n\n",
+            //       inet_ntoa(newTcp_addr.sin_addr), ntohs(newTcp_addr.sin_port), peertcpSocket);
             if (peertcpSocket < 0) {
                 perror("accept");
                 exit(1);
@@ -228,6 +254,49 @@ int main(int argc, char **argv) {
         fflush(stdout);
     }
 }//main End
+
+int connectToServer(char* buf){
+    int peertcpsocket;
+    // 매개변수 1:자기포트 2:서버IP 3:서버포트 4:자기ID
+    if ((peertcpsocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket");
+        exit(1);
+    }// create socket description
+    
+    int tcpServ_sock;
+    
+    struct sockaddr_in tcpServer_addr;
+    struct sockaddr_in tcpClient_addr;
+    struct sockaddr_in newTcp_addr;
+    
+    struct hostent *hostpss;
+    char sendhttp[1024];
+    memset(sendhttp, NULL, sizeof(sendhttp));
+    
+    if ((hostpss = gethostbyname(hostIP)) == 0) {
+        fprintf(stderr,"%s: unknown host\n",hostIP);
+    } // host ip
+    
+    memset((void *) &tcpClient_addr, 0, sizeof (tcpClient_addr));
+    tcpClient_addr.sin_family = AF_INET;
+    memcpy((void *) &tcpClient_addr.sin_addr, hostpss->h_addr, hostpss->h_length);
+    
+    tcpClient_addr.sin_port = htons((u_short)atoi(hostport));
+    if (connect(peertcpsocket, (struct sockaddr *)&tcpClient_addr, sizeof (tcpClient_addr)) < 0) {
+        perror("connect error\n");
+        exit(1);
+    } // connect client to server
+    
+    // tcp connection
+    strcpy(sendhttp, buf);
+    // give my ID to server
+    
+    //sleep(1000);
+    write(peertcpsocket, sendhttp, strlen(sendhttp));
+    // create&send HTTPmsg
+    return peertcpsocket;
+}
+
 char* touppers(char* str){
     int i;
     for(i=0;str[i] !='\0';i++)
