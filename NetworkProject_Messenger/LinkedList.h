@@ -21,8 +21,8 @@ char* getList(char* buf)
     struct node *ptr = head;
     printf("\n[ ");
     
-    char* array1[1024];
-    char* array2[1024];
+    char array1[1024];
+    char array2[1024];
     
     strcat(buf, "ID/ IP/ port/ room#\n");
     //start from the beginning
@@ -32,9 +32,9 @@ char* getList(char* buf)
         strcat(buf, " ");
         strcat(buf, ptr->IP);
         strcat(buf, " ");
-        strcat(buf, itoc_(ptr->port, array1));
+        strcat(buf, toArray(ptr->port));
         strcat(buf, " ");
-        strcat(buf, itoc_(ptr->room, array2));
+        strcat(buf, toArray(ptr->room));
         strcat(buf, "\n");
         ptr = ptr->next;
     }
@@ -173,24 +173,12 @@ void reverse(struct node** head_ref) {
     
     *head_ref = prev;
 }
-
-char* itoc_(int a, char* array)
-{
-    int temp = a;
-    int cnt = 0;   // 자릿수 세기
-    while (temp > 0){
-        temp = temp / 10;
-        ++cnt;
-    }
-    temp = a;
+char* toArray(int num){
+    int n = log10(num) + 1;
     
-    for (int i = 0; i != cnt; ++i){
-        *(array + cnt - 1 - i) = itoc(temp % 10);
-        temp = temp / 10;
-    }
-    return array;
-}
-char itoc(int a)
-{
-    return a + 0x30;
+    char* numArr = calloc(n, sizeof(char));
+    for(int i=0; i<n; ++i, num/=10)
+        numArr[i] = num%10;
+    
+    return numArr;
 }
