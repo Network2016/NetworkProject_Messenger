@@ -3,6 +3,19 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+char* toArray(int num);
+void insertFirst(char* IP, int port, char* ID, int room);
+struct node* deleteFirst();
+bool isEmpty();
+int length();
+struct node* find(char* IP, int port);
+struct node* deletes(char* IP, int port);
+void reverse(struct node** head_ref);
+char* toArray(int num);
+
+struct node *head = NULL;
+struct node *current = NULL;
+
 struct node
 {
     char IP[1024];
@@ -12,17 +25,12 @@ struct node
     struct node *next;
 };
 
-struct node *head = NULL;
-struct node *current = NULL;
 
 //display the list
 char* getList(char* buf)
 {
     struct node *ptr = head;
     printf("\n[ ");
-    
-    char array1[1024];
-    char array2[1024];
     
     strcat(buf, "ID/ IP/ port/ room#\n");
     //start from the beginning
@@ -157,7 +165,6 @@ struct node* deletes(char* IP, int port){
     
     return current;
 }
-
 
 void reverse(struct node** head_ref) {
     struct node* prev   = NULL;
