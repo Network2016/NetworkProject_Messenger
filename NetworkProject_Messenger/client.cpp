@@ -86,6 +86,7 @@ int main(int argc, char **argv) {
     FD_ZERO(&reads);
     FD_SET(fileno(stdin), &reads);
     FD_SET(tcpServ_sock, &reads);
+    FD_SET(peertcpSockets, &reads);
     // initialize the select mask variables and set the
     // mask with stdin and the tcp server socket
     
@@ -248,9 +249,9 @@ int main(int argc, char **argv) {
             
         }else if(FD_ISSET(peertcpSockets, &temps)){
             char buf[1024];
-            read(peertcpSocket, buf, sizeof(buf)-1);
+            read(peertcpSockets, buf, sizeof(buf)-1);
             printf("\n%s\n",buf); // print receive msg
-            close(peertcpSocket);
+            close(peertcpSockets);
             if(!strcmp(touppers(strtok(command, " ")),"DUPLICATE")){
                 exit(1);
             }
