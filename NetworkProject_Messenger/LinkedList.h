@@ -16,8 +16,7 @@ char* toArray(int num);
 struct node *head = NULL;
 struct node *current = NULL;
 
-struct node
-{
+struct node{
     char IP[1024];
     int port;
     char ID[1024];
@@ -27,8 +26,7 @@ struct node
 
 
 //display the list
-char* getList(char* buf)
-{
+char* getList(char* buf){
     struct node *ptr = head;
     printf("\n[ ");
     
@@ -49,9 +47,7 @@ char* getList(char* buf)
     return buf;
 }
 
-//insert link at the first location
-void insertFirst(char* IP, int port, char* ID, int room)
-{
+void insertFirst(char* IP, int port, char* ID, int room){
     //create a link
     struct node *link = (struct node*) malloc(sizeof(struct node));
     
@@ -81,8 +77,7 @@ struct node* deleteFirst()
 }
 
 //is list empty
-bool isEmpty()
-{
+bool isEmpty(){
     return head == NULL;
 }
 
@@ -91,8 +86,7 @@ int length()
     int length = 0;
     struct node *current;
     
-    for(current = head; current != NULL; current = current->next)
-    {
+    for(current = head; current != NULL; current = current->next){
         length++;
     }
     
@@ -106,8 +100,7 @@ struct node* find(char* IP, int port){
     struct node* current = head;
     
     //if list is empty
-    if(head == NULL)
-    {
+    if(head == NULL){
         return NULL;
     }
     
