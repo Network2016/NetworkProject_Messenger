@@ -71,7 +71,6 @@ int main(int argc, char *argv[]){
     //
     //
     while(1){
-        printf("waiting...\n");
         // Input from the keyboard
         memset(command, 0x00, sizeof command);
         
@@ -92,7 +91,6 @@ int main(int argc, char *argv[]){
         printf("%s", command);
         
         if(!strncmp(command, "@quit", 5)){			// quit
-            printf("in quit\n");
             memset(buf, 0x00, sizeof(buf));
             
             strcat(buf, "@delete ");
@@ -112,7 +110,6 @@ int main(int argc, char *argv[]){
             }
         }
         else if(!strncmp(command, "@exit", 5)){		// exit
-            printf("in exit\n");
             memset(buf, 0x00, sizeof(buf));
             
             strcat(buf, "@delete ");
@@ -142,10 +139,12 @@ int main(int argc, char *argv[]){
             }
         }
         else if(!strncmp(command, "@getlist", 8)){		// user & room list
-            printf("in getlist\n");
             memset(buf, 0x00, sizeof(buf));
             for(int i=0; i<room_size; i++){
                 printf("room# : %d\n", i);
+                strcat(buf, "==========room# ");
+                strcat(buf, toArray(i));
+                strcat(buf, "==========\n");
                 
                 current = head;
                 while(current != NULL){
@@ -167,11 +166,11 @@ int main(int argc, char *argv[]){
             }
         }
         else if(!strncmp(command, "@invite", 7)){	// exit
-            printf("in invite\n");
             char* ip = strtok(&command[8], " ");
             char* port = strtok(NULL, " ");
             
             struct node* guest = find(ip, atoi(port));
+            printf("invite %d %d\n", find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room, guest->room);
             guest->room = find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room;
             
             memset(buf, 0x00, sizeof(buf));
@@ -186,7 +185,6 @@ int main(int argc, char *argv[]){
             }
         }
         else if(!strncmp(command, "@mkroom", 7)){	// mkroom
-            printf("in mkroom\n");
             room_size++;
             memset(buf, 0x00, sizeof(buf));
             strcat(buf, "room ");
