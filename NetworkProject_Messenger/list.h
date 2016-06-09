@@ -2,16 +2,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 
 char* toArray(int num);
 void insertFirst(char* IP, int port, char* ID, int room);
 struct node* deleteFirst();
 bool isEmpty();
 int length();
-
 struct node* find(char* IP, int port);
 struct node* deletes(char* IP, int port);
-
 void reverse(struct node** head_ref);
 char* toArray(int num);
 
@@ -178,7 +177,7 @@ void reverse(struct node** head_ref) {
 char* toArray(int num){
     int n = log10(num) + 1;
     
-    char* numArr = calloc(n, sizeof(char));
+    char* numArr = (char *)calloc(n, sizeof(char));
     for(int i=0; i<n; ++i, num/=10)
         numArr[i] = num%10;
     
