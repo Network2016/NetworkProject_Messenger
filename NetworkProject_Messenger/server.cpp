@@ -141,10 +141,16 @@ int main(int argc, char *argv[]){
         else if(!strncmp(command, "@getlist", 8)){		// user & room list
             memset(buf, 0x00, sizeof(buf));
             for(int i=0; i<room_size; i++){
-                printf("room# : %d\n", i);
-                strcat(buf, "==========room# ");
-                strcat(buf, toArray(i));
-                strcat(buf, "==========\n");
+                if(i == 0){
+                    strcat(buf, "\n==========waiting room ");
+                    strcat(buf, toArray(i));
+                    strcat(buf, "==========\n");
+                }
+                else{
+                    strcat(buf, "==========room# ");
+                    strcat(buf, toArray(i));
+                    strcat(buf, "==========\n");
+                }
                 
                 current = head;
                 while(current != NULL){
@@ -170,7 +176,7 @@ int main(int argc, char *argv[]){
             char* port = strtok(NULL, " ");
             
             struct node* guest = find(ip, atoi(port));
-            printf("invite %d %d\n", find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room, guest->room);
+            printf("\n\ninvite %d %d\n", find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room, guest->room);
             guest->room = find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room;
             
             memset(buf, 0x00, sizeof(buf));
@@ -206,19 +212,28 @@ int main(int argc, char *argv[]){
             strcat(buf, toArray(ntohs(server.sin_port)));
             strcat(buf, "\n");
             
+            char join[1024];
+            memset(join, 0x00, sizeof(join));
+            strcat(join, "@join\n");
+            
+            int i = 0;
             current = head;
             while(current != NULL){
-                if(current->room == roomNum)
+                
+                if(current->room == roomNum){
                     connectToClient(current->IP, toArray(current->port), buf);
+                    strcat(join, current->IP);
+                    strcat(join, " ");
+                    strcat(join, toArray(current->port));
+                    strcat(join, " ");
+                    strcat(join, current->ID);
+                    strcat(join, "\n");
+                }
                 current = current->next;
+                
             }
             
-            memset(buf, 0x00, sizeof(buf));
-            strcat(buf, "join room# ");
-            strcat(buf, &command[6]);
-            strcat(buf, "\n");
-            
-            if (write(new_sock, buf, strlen(buf)) < 0) {
+            if (write(new_sock, join, strlen(join)) < 0) {
                 perror("write");
                 exit(1);
             }
