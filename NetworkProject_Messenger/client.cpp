@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "LinkedList.h"
 
 static char* hostIP = NULL; // ip
 static char* hostport = NULL; // port number
@@ -113,62 +114,29 @@ int main(int argc, char **argv) {
             
             if( command[0] == '@' ){
                 // send to server
-                peertcpSocket = connectToServer(command);
+                if(command[1] == 'e'){ // when exit
+                    head = NULL;
+                }
+                peertcpSockets = connectToServer(command);
+                // exit했을때는 나에게 들어있는b 유저목록 다 지워야한다.
             }else{
-                //connectToClient()
+                node* cnode = head;
+                char sendmsg[1024];
+                strcat(sendmsg, myID);
+                strcat(sendmsg, ") ");
+                strcat(sendmsg, command);
+                
+                while(cnode != NULL){
+                    peertcpSocket = connectToClient(head->IP, toArray(head->port), sendmsg);
+                    close(peertcpSocket);
+                    cnode = cnode->next;
+                } // 유저에게 메시지 전송
             }
-//            else if(!strcmp(touppers(strtok(command, " ")),"DOWNLOAD")){ // input download
-//                if ((peertcpSocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-//                    perror("socket");
-//                    exit(1);
-//                }// create socket description
-//                
-//                hostp = strtok(NULL, " "); // ip
-//                sin_port = strtok(NULL, " "); // port number
-//                file_name = strtok(NULL, " "); // file name
-//                file_name[strlen(file_name)-1] = '\0';// delete \n
-//                
-//                if ((hostps = gethostbyname(hostp)) == 0) {
-//                    fprintf(stderr,"%s: unknown host\n",hostp);
-//                    continue;
-//                } // host ip
-//                
-//                memset((void *) &tcpClient_addr, 0, sizeof (tcpClient_addr));
-//                tcpClient_addr.sin_family = AF_INET;
-//                memcpy((void *) &tcpClient_addr.sin_addr, hostps->h_addr, hostps->h_length);
-//                
-//                tcpClient_addr.sin_port = htons((u_short)atoi(sin_port));
-//                if (connect(peertcpSocket, (struct sockaddr *)&tcpClient_addr, sizeof (tcpClient_addr)) < 0) {
-//                    perror("connect error\n");
-//                    exit(1);
-//                } // connect client to server
-//                FD_SET(peertcpSocket, &reads);
-//                // tcp connection
-//                
-//                
-//                strcat(sendhttp, "GET ");
-//                strcat(sendhttp, file_name);
-//                strcat(sendhttp, " HTTP/1.0\n");
-//                strcat(sendhttp, "HOST: ");
-//                strcat(sendhttp, hostp);
-//                strcat(sendhttp, "\nUser-agent: Mozila/5.0\n");
-//                strcat(sendhttp, "connection: close\n");
-//                
-//                //sleep(1000);
-//                write(peertcpSocket, sendhttp, strlen(sendhttp));
-//                // create&send HTTPmsg
-//                
-//                
-//            }else if(!strcmp(touppers(strtok(command, " ")),"QUIT\n")){ // input quit -> quit process
-//                exit(1);
-//            }
-            
             fflush(stdin);
         }else if(FD_ISSET(tcpServ_sock, &temps)){
             int addrlen;
             addrlen = sizeof(newTcp_addr);
             peertcpSocket = accept(tcpServ_sock, (struct sockaddr *)&newTcp_addr, (unsigned int*)&addrlen);
-            
             //printf("connection from host %s, port %d, socket %d\n\n",
             //       inet_ntoa(newTcp_addr.sin_addr), ntohs(newTcp_addr.sin_port), peertcpSocket);
             if (peertcpSocket < 0) {
@@ -177,81 +145,67 @@ int main(int argc, char **argv) {
             }
             FD_SET(peertcpSocket, &reads);
             // make connection
-//        }else if(FD_ISSET(peertcpSocket, &temps)){
-//            char buf[1024];
-//            char file_name[1024];
-//            FILE *file = 0;
-//            int bytesread = 0;
-//            char sendhttp[1024];
-//            char send_file[1024];
-//            char file_length[1024];
-//            
-//            memset(buf, NULL, sizeof(buf));
-//            memset(file_name, NULL, sizeof(file_name));
-//            memset(sendhttp, NULL, sizeof(sendhttp));
-//            memset(send_file, NULL, sizeof(send_file));
-//            memset(file_length, NULL, sizeof(file_length));
-//            
-//            
-//            bytesread = read(peertcpSocket, buf, sizeof(buf)-1);
-//            if(bytesread <= 0){
-//                FD_CLR(peertcpSocket , &reads);
-//                //printf("Connetion closed : %d \n", peertcpSocket);
-//                close(peertcpSocket);
-//                continue;
-//            }
-//            printf("\n%s\n",buf); // print receive msg
-//            if(!strcmp(touppers(strtok(buf, " ")),"GET")){
-//                strcat(file_name, ".");
-//                strcat(file_name ,strtok(NULL, " "));
-//                
-//                
-//                file = fopen(file_name, "r"); // read mode
-//                if(!file){  // if file not exist
-//                    printf("Server Error: No such file %s \n", file_name);
-//                    fclose(file);
-//                    
-//                    strcat(sendhttp, "HTTP/1.0 404 NOT FOUND\n");
-//                    strcat(sendhttp, "Connection: close\n");
-//                    strcat(sendhttp, "Content-Length: 0\n");
-//                    strcat(sendhttp, "Content-Type: text/html\n");
-//                    write(peertcpSocket, sendhttp, strlen(sendhttp)); // send http msg
-//                }else{
-//                    char temp[1024];
-//                    while(!feof(file)){
-//                        fscanf(file, "%s", temp);
-//                        strcat(send_file, temp);
-//                        strcat(send_file, "\n");
-//                    }// read file
-//                    
-//                    snprintf(file_length, sizeof(file_length), "%d", strlen(send_file));
-//                    
-//                    
-//                    strcat(sendhttp, "HTTP/1.0 200 OK\n");
-//                    strcat(sendhttp, "Connection: close\n");
-//                    strcat(sendhttp, "Content-Length: ");
-//                    strcat(sendhttp, file_length);
-//                    strcat(sendhttp, "\nContent-Type: text/html\n");
-//                    
-//                    printf("finish %s %s\n\n", file_length, file_length);
-//                    
-//                    strcat(sendhttp, "\n");
-//                    strcat(sendhttp, send_file);
-//                    write(peertcpSocket, sendhttp, strlen(sendhttp));
-//                }
-//                
-//            }else if(!strcmp(touppers(strtok(buf, " ")),"HTTP/1.0")){
-//                close(peertcpSocket);
-//                FD_CLR(peertcpSocket, &reads);
-//                peertcpSocket = -1;
-//            } // get response, connection close
-//            
-        }else if(FD_ISSET(peertcpSockets, &temps)){
+        }else if(FD_ISSET(peertcpSocket, &temps)){ // 서버또는 유저에게서 요청받은 내용
             char buf[1024];
             read(peertcpSockets, buf, sizeof(buf)-1);
-            printf("\n%s\n",buf); // print receive msg
-            close(peertcpSockets);
-
+            char* tbuf;
+            strcpy(tbuf, buf);
+            char* inif = strtok(tbuf, " ");
+            
+            if(!strcmp(touppers(inif),"@ADD")){
+                char* tempIP = strtok(NULL, " ");
+                char* tempPort = strtok(NULL, " ");
+                char* tempID = strtok(NULL, " ");
+                
+                int tport = atoi(tempPort);
+                insertFirst(tempIP, tport, tempID, 0);
+                // close 소켓 서버에서?유저에서?
+            }else if(!strcmp(touppers(inif),"@DELETE")){
+                char* tempIP = strtok(NULL, " ");
+                char* tempPort = strtok(NULL, " ");
+                int tport = atoi(tempPort);
+                deletes(tempIP, tport);
+            }else{
+                printf("%s\n", buf);
+            }
+            
+        }
+        else if(FD_ISSET(peertcpSockets, &temps)){ // 서버에서 응답받은 내용
+            char buf[1024];
+            read(peertcpSockets, buf, sizeof(buf)-1);
+            char tbuf[1024];
+            strcpy(tbuf, buf);
+            
+            char* inif = strtok(tbuf, "\n");
+            
+            if(!strcmp(touppers(inif),"JOIN")){
+                char* temp;
+                temp = strtok(buf, "\n");
+                printf("%s\n", temp); // 입력받은 첫줄 출력
+                
+                while((temp = strtok(NULL, "\n")) != NULL){
+                    char* tempIP = strtok(temp, " ");
+                    char* tempPort = strtok(NULL, " ");
+                    int tport = atoi(tempPort);
+                    char* tempID = strtok(NULL, " ");
+                    insertFirst(tempIP, tport, tempID, 0);
+                }
+            }else if(!strcmp(touppers(inif),"INVITE OK")){
+                char* temp;
+                temp = strtok(NULL, "\n");
+                char* tempIP = strtok(temp, " ");
+                char* tempPort = strtok(NULL, " ");
+                char* tempID = strtok(NULL, " ");
+                
+                printf("invite %s\n", tempID);
+                int tport = atoi(tempPort);
+                insertFirst(tempIP, tport, tempID, 0);
+                // invite에 성공했다면 그사람을 저장한다.
+            }else{
+                printf("%s\n",buf); // print receive msg
+                close(peertcpSockets);
+                FD_CLR(peertcpSockets, &reads);
+            }
         }// receive
         
         printf("> ");
