@@ -18,6 +18,9 @@ char* toArray(int num);
 struct node *head = NULL;
 struct node *current = NULL;
 
+char toStr[128];
+char reversing[128];
+
 struct node{
     char IP[1024];
     int port;
@@ -176,11 +179,25 @@ void reverse(struct node** head_ref) {
     *head_ref = prev;
 }
 char* toArray(int num){
-    int n = log10(num) + 1;
+    memset(toStr, 0x00, sizeof(toStr));
     
-    char* numArr = (char *)calloc(n, sizeof(char));
-    for(int i=0; i<n; ++i, num/=10)
-        numArr[i] = num%10;
+    if(num == 0){
+        strcat(toStr, "0");
+        return toStr;
+    }
     
-    return numArr;
+	for(int i=0; num!=0; i++)
+		toStr[i] = num%10 + '0', num /= 10;
+    
+    int front = 0;
+    int rear = (int)strlen(toStr);
+    int len = rear;
+    
+    while(front < len){
+        char c = toStr[front];
+        toStr[front] = toStr[rear];
+        toStr[rear] = c;
+    }
+    
+    return toStr;
 }

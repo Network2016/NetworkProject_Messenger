@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "list.h"
+#include "LinkedList.h"
 
 #define PROMPT() {printf("\n>");fflush(stdout);}
 #define GETCMD "download"
