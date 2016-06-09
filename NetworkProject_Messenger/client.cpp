@@ -50,14 +50,12 @@ int main(int argc, char **argv) {
         exit(1);
     }
     
-    
     display();
     
     if ((tcpServ_sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
         exit(1);
     }// creating socket descriptor for tcp
-    
     
     memset((void *) &tcpServer_addr, 0, sizeof (tcpServer_addr));
     tcpServer_addr.sin_family = AF_INET;
@@ -79,23 +77,18 @@ int main(int argc, char **argv) {
     hostIP = argv[2]; // ip
     hostport = argv[3]; // port numbere
     myID = argv[4];
-    
     char buf[1024];
     strcat(buf, "@connect ");
     strcat(buf, myID);
     //peertcpSockets = connectToServer(buf);
-    
     peertcpSockets = connectToServer(buf);
+    
     FD_ZERO(&reads);
     FD_SET(fileno(stdin), &reads);
     FD_SET(tcpServ_sock, &reads);
     FD_SET(peertcpSockets, &reads);
-    //FD_SET(peertcpSocket, &reads);
-    // initialize the select mask variables and set the
-    // mask with stdin and the tcp server socket
     while(1){
         int nfound;
-        
         temps = reads;
         nfound = select(fd_max+1, &temps, 0, 0, NULL);
         // nfound?
@@ -127,8 +120,8 @@ int main(int argc, char **argv) {
                 strcat(sendmsg, command);
                 
                 while(cnode != NULL){
-                    peertcpSocket = connectToClient(head->IP, toArray(head->port), sendmsg);
-                    close(peertcpSocket);
+                    peertcpSockets = connectToClient(head->IP, toArray(head->port), sendmsg);
+                    close(peertcpSockets);
                     cnode = cnode->next;
                 } // 유저에게 메시지 전송
             }
@@ -136,42 +129,19 @@ int main(int argc, char **argv) {
         }else if(FD_ISSET(tcpServ_sock, &temps)){
             int addrlen;
             addrlen = sizeof(newTcp_addr);
-            peertcpSocket = accept(tcpServ_sock, (struct sockaddr *)&newTcp_addr, (unsigned int*)&addrlen);
+            peertcpSockets = accept(tcpServ_sock, (struct sockaddr *)&newTcp_addr, (unsigned int*)&addrlen);
             //printf("connection from host %s, port %d, socket %d\n\n",
             //       inet_ntoa(newTcp_addr.sin_addr), ntohs(newTcp_addr.sin_port), peertcpSocket);
-            if (peertcpSocket < 0) {
+            if (peertcpSockets < 0) {
                 perror("accept");
                 exit(1);
             }
-            FD_SET(peertcpSocket, &reads);
+            FD_SET(peertcpSockets, &reads);
             // make connection
-        }else if(FD_ISSET(peertcpSocket, &temps)){ // 서버또는 유저에게서 요청받은 내용
-            char buf[1024];
-            read(peertcpSockets, buf, sizeof(buf)-1);
-            char* tbuf;
-            strcpy(tbuf, buf);
-            char* inif = strtok(tbuf, " ");
-            
-            if(!strcmp(touppers(inif),"@ADD")){
-                char* tempIP = strtok(NULL, " ");
-                char* tempPort = strtok(NULL, " ");
-                char* tempID = strtok(NULL, " ");
-                
-                int tport = atoi(tempPort);
-                insertFirst(tempIP, tport, tempID, 0);
-                // close 소켓 서버에서?유저에서?
-            }else if(!strcmp(touppers(inif),"@DELETE")){
-                char* tempIP = strtok(NULL, " ");
-                char* tempPort = strtok(NULL, " ");
-                int tport = atoi(tempPort);
-                deletes(tempIP, tport);
-            }else{
-                printf("%s\n", buf);
-            }
-            
         }else if(FD_ISSET(peertcpSockets, &temps)){ // 서버에서 응답받은 내용
             char buf[1024];
-            read(peertcpSockets, buf, sizeof(buf)-1);
+            memset(buf, NULL, sizeof(buf));
+            read(peertcpSockets, buf, sizeof(buf));
             char tbuf[1024];
             strcpy(tbuf, buf);
             
@@ -190,6 +160,7 @@ int main(int argc, char **argv) {
                     insertFirst(tempIP, tport, tempID, 0);
                 }
             }else if(!strcmp(touppers(inif),"INVITE OK")){
+                printf("%s\n", inif);
                 char* temp;
                 temp = strtok(NULL, "\n");
                 char* tempIP = strtok(temp, " ");
@@ -200,11 +171,27 @@ int main(int argc, char **argv) {
                 int tport = atoi(tempPort);
                 insertFirst(tempIP, tport, tempID, 0);
                 // invite에 성공했다면 그사람을 저장한다.
+            }else if(!strcmp(touppers(inif),"@ADD")){
+                printf("%s\n", inif);
+                char* tempIP = strtok(NULL, " ");
+                char* tempPort = strtok(NULL, " ");
+                char* tempID = strtok(NULL, " ");
+                
+                int tport = atoi(tempPort);
+                insertFirst(tempIP, tport, tempID, 0);
+                // close 소켓 서버에서?유저에서?
+            }else if(!strcmp(touppers(inif),"@DELETE")){
+                printf("%s\n", inif);
+                char* tempIP = strtok(NULL, " ");
+                char* tempPort = strtok(NULL, " ");
+                int tport = atoi(tempPort);
+                deletes(tempIP, tport);
             }else{
                 printf("%s\n",buf); // print receive msg
                 close(peertcpSockets);
                 //FD_CLR(peertcpSockets, &reads);
             }
+            buf[0] = '\0';
         }// receive
         printf("> ");
         fflush(stdout);
