@@ -12,53 +12,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "Linkedlist.h"
+#include "list.h"
 
 #define PROMPT() {printf("\n>");fflush(stdout);}
 #define GETCMD "download"
 #define QUITCMD "quit"
 
-void connectToClient(char* cip, char* cport, char *buf){
-    struct sockaddr_in tcpClient_addr;
-    struct hostent *hostp;
-    
-    int peertcpsocket;
-    if ((peertcpsocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("socket");
-        exit(1);
-    }
-    
-    if ((hostp = gethostbyname(cip)) == 0)
-        fprintf(stderr,"%s: unknown host\n",cip);
-    
-    memset((void *) &tcpClient_addr, 0, sizeof (tcpClient_addr));
-    tcpClient_addr.sin_family = AF_INET;
-    memcpy((void *) &tcpClient_addr.sin_addr, hostp->h_addr, hostp->h_length);
-    tcpClient_addr.sin_port = htons((u_short)atoi(cport));
-    
-    if (connect(peertcpsocket, (struct sockaddr *)&tcpClient_addr, sizeof (tcpClient_addr)) < 0) {
-        perror("connect error\n");
-        exit(1);
-    }
-
-    if (write(peertcpsocket, buf, strlen(buf)) < 0) {
-        perror("write");
-        exit(1);
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
+void connectToClient(char* cip, char* cport, char *buf);
 
 
 
@@ -160,22 +120,20 @@ int main(int argc, char *argv[]){
             strcat(buf, " ");
             strcat(buf, toArray(ntohs(server.sin_port)));
             
-//            struct node* delNode = find(inet_ntoa(server.sin_addr), ntohs(server.sin_port));
-//            int roomNum = delNode->room;
-            
             int roomNum = find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room;
             deletes(inet_ntoa(server.sin_addr), ntohs(server.sin_port));
-            
-            current = head;
-            while(current != NULL){
-                if(current->room == roomNum)
-                    connectToClient(current->IP, toArray(current->port), buf);
-                current = current->next;
+            if(roomNum != 0){
+                current = head;
+                while(current != NULL){
+                    if(current->room == roomNum)
+                        connectToClient(current->IP, toArray(current->port), buf);
+                    current = current->next;
+                }
             }
         }
         else if(!strncmp(command, "@connect", 8)){	// connect
-            insertFirst(inet_ntoa(server.sin_addr), ntohs(server.sin_port), &command[10], 0);
-            printf("%s is connected\n", &command[10]);
+            insertFirst(inet_ntoa(server.sin_addr), ntohs(server.sin_port), &command[9], 0);
+            printf("%s is connected\n", &command[9]);
             
             if (write(new_sock, "connection ok", strlen("connection ok")) < 0) {
                 perror("write");
@@ -185,7 +143,7 @@ int main(int argc, char *argv[]){
         else if(!strncmp(command, "@getlist", 8)){		// user & room list
             printf("in getlist\n");
             memset(buf, 0x00, sizeof(buf));
-            for(int i=1; i<room_size; i++){
+            for(int i=0; i<room_size; i++){
                 printf("room# : %d\n", i);
                 
             	current = head;
@@ -202,7 +160,7 @@ int main(int argc, char *argv[]){
                 exit(1);
             }
         }
-        else if(!strncmp(command, "@invite", 6)){	// exit
+        else if(!strncmp(command, "@invite", 7)){	// exit
             printf("in invite\n");
             char* ip = strtok(&command[8], " ");
             char* port = strtok(NULL, " ");
@@ -234,8 +192,36 @@ int main(int argc, char *argv[]){
                 exit(1);
             }
         }
-        else{										// error
-            
-        }
     }
-} /* main - hw2.c */
+}// main
+
+
+
+void connectToClient(char* cip, char* cport, char *buf){
+    struct sockaddr_in tcpClient_addr;
+    struct hostent *hostp;
+    
+    int peertcpsocket;
+    if ((peertcpsocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket");
+        exit(1);
+    }
+    
+    if ((hostp = gethostbyname(cip)) == 0)
+        fprintf(stderr,"%s: unknown host\n",cip);
+    
+    memset((void *) &tcpClient_addr, 0, sizeof (tcpClient_addr));
+    tcpClient_addr.sin_family = AF_INET;
+    memcpy((void *) &tcpClient_addr.sin_addr, hostp->h_addr, hostp->h_length);
+    tcpClient_addr.sin_port = htons((u_short)atoi(cport));
+    
+    if (connect(peertcpsocket, (struct sockaddr *)&tcpClient_addr, sizeof (tcpClient_addr)) < 0) {
+        perror("connect error\n");
+        exit(1);
+    }
+    
+    if (write(peertcpsocket, buf, strlen(buf)) < 0) {
+        perror("write");
+        exit(1);
+    }
+}
