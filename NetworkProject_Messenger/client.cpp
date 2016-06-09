@@ -108,10 +108,13 @@ int main(int argc, char **argv) {
                 // send to server
                 if(command[1] == 'e'){ // when exit
                     head = NULL;
+                    peertcpSockets = connectToServer(command);
+                    close(peertcpSocket);
+                    exit(1);
                 }
                 peertcpSockets = connectToServer(command);
                 FD_SET(peertcpSockets, &reads);
-                // exit했을때는 나에게 들어있는b 유저목록 다 지워야한다.
+                // exit했을때는 나에게 들어있는 유저목록 다 지워야한다.
             }else{
                 node* cnode = head;
                 char sendmsg[1024];
@@ -124,6 +127,7 @@ int main(int argc, char **argv) {
                     close(peertcpSockets);
                     cnode = cnode->next;
                 } // 유저에게 메시지 전송
+                close(peertcpSocket);
             }
             fflush(stdin);
         }else if(FD_ISSET(tcpServ_sock, &temps)){
@@ -159,6 +163,7 @@ int main(int argc, char **argv) {
                     char* tempID = strtok(NULL, " ");
                     insertFirst(tempIP, tport, tempID, 0);
                 }
+                close(peertcpSockets);
             }else if(!strcmp(touppers(inif),"INVITE OK")){
                 printf("%s\n", inif);
                 char* temp;
@@ -170,6 +175,7 @@ int main(int argc, char **argv) {
                 printf("invite %s\n", tempID);
                 int tport = atoi(tempPort);
                 insertFirst(tempIP, tport, tempID, 0);
+                close(peertcpSockets);
                 // invite에 성공했다면 그사람을 저장한다.
             }else if(!strcmp(touppers(inif),"@ADD")){
                 printf("%s\n", inif);
@@ -179,6 +185,7 @@ int main(int argc, char **argv) {
                 
                 int tport = atoi(tempPort);
                 insertFirst(tempIP, tport, tempID, 0);
+                close(peertcpSockets);
                 // close 소켓 서버에서?유저에서?
             }else if(!strcmp(touppers(inif),"@DELETE")){
                 printf("%s\n", inif);
@@ -186,14 +193,16 @@ int main(int argc, char **argv) {
                 char* tempPort = strtok(NULL, " ");
                 int tport = atoi(tempPort);
                 deletes(tempIP, tport);
+                close(peertcpSockets);
             }else{
                 printf("%s\n",buf); // print receive msg
                 close(peertcpSockets);
                 //FD_CLR(peertcpSockets, &reads);
             }
             buf[0] = '\0';
+            printf("> ");
         }// receive
-        printf("> ");
+        
         fflush(stdout);
     }
 }//main End
