@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
             }else{
                 printf("%s\n",buf); // print receive msg
                 close(peertcpSockets);
-                FD_CLR(peertcpSockets, &reads);
+                //FD_CLR(peertcpSockets, &reads);
             }
         }// receive
         printf("> ");
