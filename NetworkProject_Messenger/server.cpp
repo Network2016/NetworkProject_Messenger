@@ -23,7 +23,7 @@ void connectToClient(char* cip, char* cport, char *buf);
 
 
 int room_size;
-int portnum = 0;
+int portnum;
 
 
 
@@ -147,12 +147,14 @@ int main(int argc, char *argv[]){
                 printf("room# : %d\n", i);
                 
             	current = head;
-                while(current != NULL)
+                while(current != NULL){
                     if(current->room == i){
                         strcat(buf, current->IP);
                         strcat(buf, toArray(current->port));
                         strcat(buf, current->ID);
                     }
+                	current = current->next;
+                }
             }
             
             if (write(new_sock, buf, strlen(buf)) < 0) {
@@ -191,6 +193,9 @@ int main(int argc, char *argv[]){
                 perror("write");
                 exit(1);
             }
+        }
+        else if(!strncmp(command, "@join", 7)){
+            
         }
     }
 }// main
