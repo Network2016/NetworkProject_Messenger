@@ -37,7 +37,6 @@ int main(int argc, char **argv) {
     int tcpServ_sock;
     
     struct sockaddr_in tcpServer_addr;
-    struct sockaddr_in tcpClient_addr;
     struct sockaddr_in newTcp_addr;
     
     fd_set reads, temps;
@@ -94,10 +93,6 @@ int main(int argc, char **argv) {
         // nfound?
         if(FD_ISSET(fileno(stdin), &temps)) {
             // Input from the keyboard
-            char* hostp = NULL;
-            char* sin_port = NULL;
-            char* file_name = NULL;
-            struct hostent *hostps;
             char sendhttp[1024];
             memset(sendhttp, NULL, sizeof(sendhttp));
             
@@ -216,11 +211,7 @@ int connectToClient(char* cip, char* cport, char *buf){
         exit(1);
     }// create socket description
     
-    int tcpServ_sock;
-    
-    struct sockaddr_in tcpServer_addr;
     struct sockaddr_in tcpClient_addr;
-    struct sockaddr_in newTcp_addr;
     
     struct hostent *hostpss;
     char sendhttp[1024];
