@@ -179,25 +179,7 @@ void reverse(struct node** head_ref) {
     *head_ref = prev;
 }
 char* toArray(int num){
-    memset(toStr, 0x00, sizeof(toStr));
-    
-    if(num == 0){
-        strcat(toStr, "0");
-        return toStr;
-    }
-    
-	for(int i=0; num!=0; i++)
-		toStr[i] = num%10 + '0', num /= 10;
-    
-    int front = 0;
-    int rear = (int)strlen(toStr);
-    int len = rear;
-    
-    while(front < len){
-        char c = toStr[front];
-        toStr[front] = toStr[rear];
-        toStr[rear] = c;
-    }
-    
+    memset(toStr, 0x00, strlen(toStr));
+    sprintf(toStr, "%d", num);
     return toStr;
 }
