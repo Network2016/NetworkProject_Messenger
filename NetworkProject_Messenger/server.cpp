@@ -18,6 +18,50 @@
 #define GETCMD "download"
 #define QUITCMD "quit"
 
+void connectToClient(char* cip, char* cport, char *buf){
+    struct sockaddr_in tcpClient_addr;
+    struct hostent *hostp;
+    
+    int peertcpsocket;
+    if ((peertcpsocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket");
+        exit(1);
+    }
+    
+    if ((hostp = gethostbyname(cip)) == 0)
+        fprintf(stderr,"%s: unknown host\n",cip);
+    
+    memset((void *) &tcpClient_addr, 0, sizeof (tcpClient_addr));
+    tcpClient_addr.sin_family = AF_INET;
+    memcpy((void *) &tcpClient_addr.sin_addr, hostp->h_addr, hostp->h_length);
+    tcpClient_addr.sin_port = htons((u_short)atoi(cport));
+    
+    if (connect(peertcpsocket, (struct sockaddr *)&tcpClient_addr, sizeof (tcpClient_addr)) < 0) {
+        perror("connect error\n");
+        exit(1);
+    }
+
+    if (write(peertcpsocket, buf, strlen(buf)) < 0) {
+        perror("write");
+        exit(1);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int room_size;
 int portnum = 0;
 
@@ -62,6 +106,7 @@ int main(int argc, char *argv[]){
     }
     
     
+    
     //
     //
     //
@@ -86,38 +131,51 @@ int main(int argc, char *argv[]){
         read(new_sock, command, sizeof command);	// read user command
         printf("%s", command);
         
-        
-        //	for test
-//        if (write(new_sock, "connection ok", strlen("connection ok")) < 0) {
-//            perror("write");
-//            exit(1);
-//        }
-//        close(new_sock);
-//        printf("after write\n");
-        
-        
         if(!strncmp(command, "@quit", 5)){			// quit
+            printf("in quit\n");
+            memset(buf, 0x00, sizeof(buf));
+            
+            strcat(buf, "@delete ");
+            strcat(buf, inet_ntoa(server.sin_addr));
+            strcat(buf, " ");
+            strcat(buf, toArray(ntohs(server.sin_port)));
+            
+            struct node* delNode = find(inet_ntoa(server.sin_addr), ntohs(server.sin_port));
+            int roomNum = delNode->room;
+            delNode->room = 0;
+            
+            current = head;
+            while(current != NULL){
+                if(current->room == roomNum)
+            		connectToClient(current->IP, toArray(current->port), buf);
+                current = current->next;
+            }
         }
         else if(!strncmp(command, "@exit", 5)){		// exit
-            current = head;
+            printf("in exit\n");
             memset(buf, 0x00, sizeof(buf));
+            
+            strcat(buf, "@delete ");
+            strcat(buf, inet_ntoa(server.sin_addr));
+            strcat(buf, " ");
+            strcat(buf, toArray(ntohs(server.sin_port)));
+            
+//            struct node* delNode = find(inet_ntoa(server.sin_addr), ntohs(server.sin_port));
+//            int roomNum = delNode->room;
+            
+            int roomNum = find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room;
+            deletes(inet_ntoa(server.sin_addr), ntohs(server.sin_port));
+            
+            current = head;
             while(current != NULL){
-                strcat(buf, current->ID);
-                strcat(buf, current->IP);
-                strcat(buf, toArray(current->port));
-                strcat(buf, toArray(current->room));
-                strcat(buf, "\n");
-                
-                if (write(new_sock, buf, strlen(buf)) < 0) {
-                    perror("write");
-                    exit(1);
-                }
+                if(current->room == roomNum)
+                    connectToClient(current->IP, toArray(current->port), buf);
+                current = current->next;
             }
         }
         else if(!strncmp(command, "@connect", 8)){	// connect
-            printf("in connection...\n");
-            
             insertFirst(inet_ntoa(server.sin_addr), ntohs(server.sin_port), &command[10], 0);
+            printf("%s is connected\n", &command[10]);
             
             if (write(new_sock, "connection ok", strlen("connection ok")) < 0) {
                 perror("write");
@@ -125,17 +183,56 @@ int main(int argc, char *argv[]){
             }
         }
         else if(!strncmp(command, "@getlist", 8)){		// user & room list
-            getList(buf);
+            printf("in getlist\n");
+            memset(buf, 0x00, sizeof(buf));
+            for(int i=1; i<room_size; i++){
+                printf("room# : %d\n", i);
+                
+            	current = head;
+                while(current != NULL)
+                    if(current->room == i){
+                        strcat(buf, current->IP);
+                        strcat(buf, toArray(current->port));
+                        strcat(buf, current->ID);
+                    }
+            }
+            
             if (write(new_sock, buf, strlen(buf)) < 0) {
                 perror("write");
                 exit(1);
             }
         }
         else if(!strncmp(command, "@invite", 6)){	// exit
-            // invite function
+            printf("in invite\n");
+            char* ip = strtok(&command[8], " ");
+            char* port = strtok(NULL, " ");
+            
+            struct node* guest = find(ip, atoi(port));
+            guest->room = find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room;
+            
+            memset(buf, 0x00, sizeof(buf));
+            strcat(buf, "invite ");
+            strcat(buf, inet_ntoa(server.sin_addr));
+            strcat(buf, " ");
+            strcat(buf, toArray(ntohs(server.sin_port)));
+            
+            if (write(new_sock, buf, strlen(buf)) < 0) {
+                perror("write");
+                exit(1);
+            }
         }
-        else if(!strncmp(command, "@mkroom", 6)){	// mkroom
+        else if(!strncmp(command, "@mkroom", 7)){	// mkroom
+            printf("in mkroom\n");
             room_size++;
+            memset(buf, 0x00, sizeof(buf));
+            strcat(buf, "room ");
+            strcat(buf, toArray(room_size));
+            strcat(buf, " is created");
+            
+            if (write(new_sock, buf, strlen(buf)) < 0) {
+                perror("write");
+                exit(1);
+            }
         }
         else{										// error
             
