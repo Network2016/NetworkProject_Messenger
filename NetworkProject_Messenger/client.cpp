@@ -99,7 +99,6 @@ int main(int argc, char **argv) {
         temps = reads;
         nfound = select(fd_max+1, &temps, 0, 0, NULL);
         // nfound?
-        
         if(FD_ISSET(fileno(stdin), &temps)) {
             // Input from the keyboard
             char* hostp = NULL;
@@ -118,6 +117,7 @@ int main(int argc, char **argv) {
                     head = NULL;
                 }
                 peertcpSockets = connectToServer(command);
+                FD_SET(peertcpSockets, &reads);
                 // exit했을때는 나에게 들어있는b 유저목록 다 지워야한다.
             }else{
                 node* cnode = head;
@@ -169,8 +169,7 @@ int main(int argc, char **argv) {
                 printf("%s\n", buf);
             }
             
-        }
-        else if(FD_ISSET(peertcpSockets, &temps)){ // 서버에서 응답받은 내용
+        }else if(FD_ISSET(peertcpSockets, &temps)){ // 서버에서 응답받은 내용
             char buf[1024];
             read(peertcpSockets, buf, sizeof(buf)-1);
             char tbuf[1024];
@@ -207,7 +206,6 @@ int main(int argc, char **argv) {
                 FD_CLR(peertcpSockets, &reads);
             }
         }// receive
-        
         printf("> ");
         fflush(stdout);
     }
