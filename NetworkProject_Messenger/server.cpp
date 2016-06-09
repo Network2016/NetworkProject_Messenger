@@ -143,7 +143,6 @@ int main(int argc, char *argv[]){
             for(int i=0; i<room_size; i++){
                 if(i == 0){
                     strcat(buf, "\n==========waiting room ");
-                    strcat(buf, toArray(i));
                     strcat(buf, "==========\n");
                 }
                 else{
@@ -165,25 +164,6 @@ int main(int argc, char *argv[]){
                     current = current->next;
                 }
             }
-            
-            if (write(new_sock, buf, strlen(buf)) < 0) {
-                perror("write");
-                exit(1);
-            }
-        }
-        else if(!strncmp(command, "@invite", 7)){	// exit
-            char* ip = strtok(&command[8], " ");
-            char* port = strtok(NULL, " ");
-            
-            struct node* guest = find(ip, atoi(port));
-            printf("\n\ninvite %d %d\n", find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room, guest->room);
-            guest->room = find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room;
-            
-            memset(buf, 0x00, sizeof(buf));
-            strcat(buf, "invite ");
-            strcat(buf, inet_ntoa(server.sin_addr));
-            strcat(buf, " ");
-            strcat(buf, toArray(ntohs(server.sin_port)));
             
             if (write(new_sock, buf, strlen(buf)) < 0) {
                 perror("write");
@@ -219,8 +199,7 @@ int main(int argc, char *argv[]){
             int i = 0;
             current = head;
             while(current != NULL){
-                
-                if(current->room == roomNum){
+                if(strcmp(toArray(ntohs(server.sin_port)), toArray(current->port)) && current->room == roomNum){
                     connectToClient(current->IP, toArray(current->port), buf);
                     strcat(join, current->IP);
                     strcat(join, " ");
@@ -230,7 +209,6 @@ int main(int argc, char *argv[]){
                     strcat(join, "\n");
                 }
                 current = current->next;
-                
             }
             
             if (write(new_sock, join, strlen(join)) < 0) {
@@ -238,6 +216,8 @@ int main(int argc, char *argv[]){
                 exit(1);
             }
             find(inet_ntoa(server.sin_addr), ntohs(server.sin_port))->room = atoi(&command[6]);
+            printf("room to %d\n", atoi(&command[6]));
+            printf("room to %d\n", atoi(&command[6]));
         }
     }
 }// main
