@@ -49,6 +49,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
     
+    
     display();
     
     if ((tcpServ_sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
@@ -81,15 +82,16 @@ int main(int argc, char **argv) {
     char buf[1024];
     strcat(buf, "@connect ");
     strcat(buf, myID);
-    peertcpSockets = connectToServer(buf);
+    //peertcpSockets = connectToServer(buf);
     
+    peertcpSockets = connectToServer(buf);
     FD_ZERO(&reads);
     FD_SET(fileno(stdin), &reads);
     FD_SET(tcpServ_sock, &reads);
     FD_SET(peertcpSockets, &reads);
+    //FD_SET(peertcpSocket, &reads);
     // initialize the select mask variables and set the
     // mask with stdin and the tcp server socket
-    
     while(1){
         int nfound;
         
@@ -162,9 +164,7 @@ int main(int argc, char **argv) {
 //            }
             
             fflush(stdin);
-        }
-        else if(FD_ISSET(tcpServ_sock, &temps))
-        {
+        }else if(FD_ISSET(tcpServ_sock, &temps)){
             int addrlen;
             addrlen = sizeof(newTcp_addr);
             peertcpSocket = accept(tcpServ_sock, (struct sockaddr *)&newTcp_addr, (unsigned int*)&addrlen);
@@ -176,85 +176,82 @@ int main(int argc, char **argv) {
                 exit(1);
             }
             FD_SET(peertcpSocket, &reads);
-        } // make connection
-        else if(FD_ISSET(peertcpSocket, &temps))
-        {
-            char buf[1024];
-            char file_name[1024];
-            FILE *file = 0;
-            int bytesread = 0;
-            char sendhttp[1024];
-            char send_file[1024];
-            char file_length[1024];
-            
-            memset(buf, NULL, sizeof(buf));
-            memset(file_name, NULL, sizeof(file_name));
-            memset(sendhttp, NULL, sizeof(sendhttp));
-            memset(send_file, NULL, sizeof(send_file));
-            memset(file_length, NULL, sizeof(file_length));
-            
-            
-            bytesread = read(peertcpSocket, buf, sizeof(buf)-1);
-            if(bytesread <= 0){
-                FD_CLR(peertcpSocket , &reads);
-                //printf("Connetion closed : %d \n", peertcpSocket);
-                close(peertcpSocket);
-                continue;
-            }
-            printf("\n%s\n",buf); // print receive msg
-            if(!strcmp(touppers(strtok(buf, " ")),"GET")){
-                strcat(file_name, ".");
-                strcat(file_name ,strtok(NULL, " "));
-                
-                
-                file = fopen(file_name, "r"); // read mode
-                if(!file){  // if file not exist
-                    printf("Server Error: No such file %s \n", file_name);
-                    fclose(file);
-                    
-                    strcat(sendhttp, "HTTP/1.0 404 NOT FOUND\n");
-                    strcat(sendhttp, "Connection: close\n");
-                    strcat(sendhttp, "Content-Length: 0\n");
-                    strcat(sendhttp, "Content-Type: text/html\n");
-                    write(peertcpSocket, sendhttp, strlen(sendhttp)); // send http msg
-                }else{
-                    char temp[1024];
-                    while(!feof(file)){
-                        fscanf(file, "%s", temp);
-                        strcat(send_file, temp);
-                        strcat(send_file, "\n");
-                    }// read file
-                    
-                    snprintf(file_length, sizeof(file_length), "%d", strlen(send_file));
-                    
-                    
-                    strcat(sendhttp, "HTTP/1.0 200 OK\n");
-                    strcat(sendhttp, "Connection: close\n");
-                    strcat(sendhttp, "Content-Length: ");
-                    strcat(sendhttp, file_length);
-                    strcat(sendhttp, "\nContent-Type: text/html\n");
-                    
-                    printf("finish %s %s\n\n", file_length, file_length);
-                    
-                    strcat(sendhttp, "\n");
-                    strcat(sendhttp, send_file);
-                    write(peertcpSocket, sendhttp, strlen(sendhttp));
-                }
-                
-            }else if(!strcmp(touppers(strtok(buf, " ")),"HTTP/1.0")){
-                close(peertcpSocket);
-                FD_CLR(peertcpSocket, &reads);
-                peertcpSocket = -1;
-            } // get response, connection close
-            
+            // make connection
+//        }else if(FD_ISSET(peertcpSocket, &temps)){
+//            char buf[1024];
+//            char file_name[1024];
+//            FILE *file = 0;
+//            int bytesread = 0;
+//            char sendhttp[1024];
+//            char send_file[1024];
+//            char file_length[1024];
+//            
+//            memset(buf, NULL, sizeof(buf));
+//            memset(file_name, NULL, sizeof(file_name));
+//            memset(sendhttp, NULL, sizeof(sendhttp));
+//            memset(send_file, NULL, sizeof(send_file));
+//            memset(file_length, NULL, sizeof(file_length));
+//            
+//            
+//            bytesread = read(peertcpSocket, buf, sizeof(buf)-1);
+//            if(bytesread <= 0){
+//                FD_CLR(peertcpSocket , &reads);
+//                //printf("Connetion closed : %d \n", peertcpSocket);
+//                close(peertcpSocket);
+//                continue;
+//            }
+//            printf("\n%s\n",buf); // print receive msg
+//            if(!strcmp(touppers(strtok(buf, " ")),"GET")){
+//                strcat(file_name, ".");
+//                strcat(file_name ,strtok(NULL, " "));
+//                
+//                
+//                file = fopen(file_name, "r"); // read mode
+//                if(!file){  // if file not exist
+//                    printf("Server Error: No such file %s \n", file_name);
+//                    fclose(file);
+//                    
+//                    strcat(sendhttp, "HTTP/1.0 404 NOT FOUND\n");
+//                    strcat(sendhttp, "Connection: close\n");
+//                    strcat(sendhttp, "Content-Length: 0\n");
+//                    strcat(sendhttp, "Content-Type: text/html\n");
+//                    write(peertcpSocket, sendhttp, strlen(sendhttp)); // send http msg
+//                }else{
+//                    char temp[1024];
+//                    while(!feof(file)){
+//                        fscanf(file, "%s", temp);
+//                        strcat(send_file, temp);
+//                        strcat(send_file, "\n");
+//                    }// read file
+//                    
+//                    snprintf(file_length, sizeof(file_length), "%d", strlen(send_file));
+//                    
+//                    
+//                    strcat(sendhttp, "HTTP/1.0 200 OK\n");
+//                    strcat(sendhttp, "Connection: close\n");
+//                    strcat(sendhttp, "Content-Length: ");
+//                    strcat(sendhttp, file_length);
+//                    strcat(sendhttp, "\nContent-Type: text/html\n");
+//                    
+//                    printf("finish %s %s\n\n", file_length, file_length);
+//                    
+//                    strcat(sendhttp, "\n");
+//                    strcat(sendhttp, send_file);
+//                    write(peertcpSocket, sendhttp, strlen(sendhttp));
+//                }
+//                
+//            }else if(!strcmp(touppers(strtok(buf, " ")),"HTTP/1.0")){
+//                close(peertcpSocket);
+//                FD_CLR(peertcpSocket, &reads);
+//                peertcpSocket = -1;
+//            } // get response, connection close
+//            
         }else if(FD_ISSET(peertcpSockets, &temps)){
             char buf[1024];
             read(peertcpSockets, buf, sizeof(buf)-1);
             printf("\n%s\n",buf); // print receive msg
             close(peertcpSockets);
-            if(!strcmp(touppers(strtok(command, " ")),"DUPLICATE")){
-                exit(1);
-            }
+
         }// receive
         
         printf("> ");
@@ -306,7 +303,7 @@ int connectToClient(char* cip, char* cport, char *buf){
 }
 
 int connectToServer(char* buf){
-    int peertcpsocket;
+    int peertcpsocket=-1;
     // 매개변수 1:자기포트 2:서버IP 3:서버포트 4:자기ID
     if ((peertcpsocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
@@ -360,6 +357,5 @@ void display() {
     printf("> ");
     fflush(stdout);
 }
-
 
 
